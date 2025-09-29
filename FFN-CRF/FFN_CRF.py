@@ -69,9 +69,9 @@ class FFNCRF():
             training_data : DataLoader = None,
             evaluation_data : DataLoader =None,
             monitor_evaluation_cost=False,
-            monitor_evaluation_accuracy=False,
+            monitor_evaluation_accuracy=True,
             monitor_training_cost=False,
-            monitor_training_accuracy=False):
+            monitor_training_accuracy=True):
         if training_data == None:
             training_data = self.data
             
@@ -164,19 +164,24 @@ class FFNCRF():
             ans += sum(int(x == y) for (x, y) in results)
         return ans
     
+    # 处理使其适配大模型的训练
     def process_data(self, data: DataLoader, is_train = False):
         datas = []
         for sentence, tags in data.sentences:
+            tagis = self.tags2inds(tags)
             for i in range(len(sentence)):
-                x = [self.feaseq[x] for x in self.templates(sentence, i) if x in self.feaseq]
-                y = self.tagseq[tags[i]]
+                x = [self.feaseq[x] for x in self.template(sentence, i, -1) 
+                                    if x in self.feaseq] if i == 0\
+                    else [self.feaseq[x] for x in self.template(sentence, i, tagis[i-1])
+                                    if x in self.feaseq]
+                y = tagis[i]
                 datas.append((x,y))
         return datas
     
     def expand_batch(self,batch,is_train = False):
         ret = []
         for x,y in batch:
-            nx = np.zeros((self.feanum,1))
+            nx = np.zeros((self.nf,1))
             for i in x:
                 nx[i,0] = 1
             if is_train:
@@ -188,7 +193,7 @@ class FFNCRF():
         """
         对于训练，要求输出是一个向量而非单个结果
         """
-        e = np.zeros((self.tagnum, 1))
+        e = np.zeros((self.nt, 1))
         e[j] = 1.0
         return e
     
