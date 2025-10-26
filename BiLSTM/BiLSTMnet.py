@@ -9,12 +9,14 @@ class BiLSTM(nn.Module):
 
         self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, bidirectional=True, batch_first=True)
+        self.dropout = nn.Dropout()
         self.hidden2tag = nn.LazyLinear(tagset_size)
 
     def forward(self, sentence):
         embeds = self.word_embeddings(sentence)
         lstm_out, _ = self.lstm(embeds)
         tag_space = self.hidden2tag(lstm_out)
-        tag_scores = F.log_softmax(tag_space, dim=-1)
+        dropped_tag_space = self.dropout(tag_space)
+        tag_scores = F.log_softmax(dropped_tag_space, dim=-1)
         return tag_scores
     
