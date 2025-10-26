@@ -35,8 +35,32 @@ class Trainer:
         sequences, labels = zip(*batch)
         return pad_sequence(sequences, batch_first=True), pad_sequence(labels, batch_first=True)
     
-    def fit(self, dataset, epoches = 10, batchsize = 32):
+    def fit(self, dataset, epoches = 10, batchsize = 32, test_dataset = None):
         dataloader = DataLoader(dataset,batchsize,shuffle=True,collate_fn=self.collate_fn)
         for epoch in range(epoches):
             l = self.train_epoch(dataloader)
-            print(f'epoch {epoch} : loss {l}')
+            if test_dataset:
+                acc, tot = self.evaluate(test_dataset)
+            print(f'epoch {epoch} : loss {l:.4f} {acc} / {tot} acc {acc / tot:.4f}' if test_dataset else f'epoch {epoch} : loss {l:.4f}')
+            
+    def evalutaeBatch(self, batch):
+        '评估一个batch,返回准确的个数'
+        X , y = batch
+        mask = (y != 0)
+        X:torch.Tensor
+        X.to(self.device), y.to(self.device)
+        self.optimizer.zero_grad()
+        y_out = self.model(X)   # 这里是 X 而非 batch
+        return ((torch.argmax(y_out, dim=-1) == y) & mask).sum().item(), mask.sum().item()  # 这里注意运算优先级
+        
+    def evaluate(self, dataset, batchsize = 32):
+        self.model.eval()
+        dataloader = DataLoader(dataset,batchsize,shuffle=True,collate_fn=self.collate_fn)
+        tot_acc = 0
+        tot_cnt = 0
+        with torch.no_grad():
+            for batch in dataloader:
+                acc, valid = self.evalutaeBatch(batch)
+                tot_acc += acc
+                tot_cnt += valid
+        return tot_acc , tot_cnt

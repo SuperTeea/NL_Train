@@ -28,7 +28,23 @@ class Vocab():
     
     def encode(self, data):
         '把word,tag编码成idx'
-        return ([self.word_to_ix.get(x,1) for x in data[0]], [self.tag_to_ix[x] for x in data[1]])
+        return ([self.word_to_ix.get(x,1) for x in data[0]], [self.tag_to_ix.get(x) for x in data[1]])
+    
+    def encodeSentence(self, sentence):
+        '编码 word 序列'
+        return [self.word_to_ix.get(x,1) for x in sentence]
+    
+    def decodeSentence(self, sentence):
+        '解码 word idx 序列'
+        return [self.ix_to_word[x] for x in sentence]
+    
+    def encodeTags(self, tags):
+        '编码 word 序列'
+        return [self.tag_to_ix.get(x,1) for x in tags]
+    
+    def decodeSentence(self, tags):
+        '解码 word idx 序列'
+        return [self.ix_to_tag[x] for x in tags]
     
     def wordSize(self):
         return len(self.word_to_ix)
