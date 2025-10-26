@@ -15,9 +15,10 @@ class Vocab():
     def __buildIdxTrans(self, dataset):
         sentence, tags = reduce(lambda x,y: (x[0] + y[0], x[1] + y[1]), dataset)
         self.word_to_ix = {word : ix + 2 for ix, word in enumerate(set(sentence))}
-        self.tag_to_ix = {tag : ix for ix, tag in enumerate(set(tags))}
+        self.tag_to_ix = {tag : ix + 1 for ix, tag in enumerate(set(tags))}
         self.word_to_ix['<PAD>'] = 0
         self.word_to_ix['<UNK>'] = 1
+        self.tag_to_ix['<PAD>'] = 0
         self.ix_to_word = {ix : word for word, ix in self.word_to_ix.items()}
         self.ix_to_tag = {ix : tag for tag, ix in self.tag_to_ix.items()}
         
@@ -26,9 +27,15 @@ class Vocab():
         return ([self.ix_to_word[x] for x in data[0]], [self.ix_to_tag[x] for x in data[1]])
     
     def encode(self, data):
-        '把word编码成idx'
+        '把word,tag编码成idx'
         return ([self.word_to_ix.get(x,1) for x in data[0]], [self.tag_to_ix[x] for x in data[1]])
     
+    def wordSize(self):
+        return len(self.word_to_ix)
+    
+    def tagSize(self):
+        return len(self.tag_to_ix)
+
 if __name__ == '__main__':
     dataset = ConllDataset(r'path')
     vocab = Vocab(dataset)
