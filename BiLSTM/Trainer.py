@@ -6,6 +6,7 @@ from torch.nn.utils.rnn import pad_sequence
 class Trainer:
     def __init__(self, model, optimizer:torch.optim.Optimizer, device = 'cuda', loss = torch.nn.NLLLoss(ignore_index=0)):
         self.model = model
+        model.to(device)
         self.optimizer = optimizer
         self.device = device
         self.loss = loss
@@ -33,16 +34,21 @@ class Trainer:
     
     def collate_fn(self, batch):
         sequences, labels = zip(*batch)
-        return pad_sequence(sequences, batch_first=True), pad_sequence(labels, batch_first=True)
+        return pad_sequence(sequences, batch_first=True).to(self.device), pad_sequence(labels, batch_first=True).to(self.device)
     
     def fit(self, dataset, epoches = 10, batchsize = 32, test_dataset = None):
         dataloader = DataLoader(dataset,batchsize,shuffle=True,collate_fn=self.collate_fn)
+        best = 0.0
+        achieved_epoch = 0
         for epoch in range(epoches):
             l = self.train_epoch(dataloader)
             if test_dataset:
                 acc, tot = self.evaluate(test_dataset)
-            print(f'epoch {epoch} : loss {l:.4f} {acc} / {tot} acc {acc / tot:.4f}' if test_dataset else f'epoch {epoch} : loss {l:.4f}')
-            
+                if acc / tot > best:
+                    best = max(best, acc/tot)
+                    achieved_epoch = epoch + 1
+            print(f'epoch {epoch + 1} : loss {l:.4f} {acc} / {tot} acc {acc / tot:.4f}' if test_dataset else f'epoch {epoch} : loss {l:.4f}')
+        print(f'Best acc {best:.4f} in {achieved_epoch} epoch')
     def evalutaeBatch(self, batch):
         '评估一个batch,返回准确的个数'
         X , y = batch
