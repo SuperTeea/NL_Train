@@ -1,0 +1,6 @@
+lr 0.6
+small data:
+Best acc 0.8008 in 64 epoch
+
+large data:
+Best acc 0.8944 in 17 epoch
