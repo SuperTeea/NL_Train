@@ -55,7 +55,9 @@ class Trainer:
         X:torch.Tensor
         X.to(self.device), y.to(self.device)
         y_out = self.model.decode(X)
-        return ((torch.argmax(y_out, dim=-1) == y) & mask).sum().item(), mask.sum().item()  # 这里注意运算优先级
+        y_out = [torch.tensor(x) for x in y_out]
+        tensor_yout = pad_sequence(y_out, batch_first=True).to(self.device)
+        return ((tensor_yout == y) & mask).sum().item(), mask.sum().item()  # 这里注意运算优先级
         
     def evaluate(self, dataset, batchsize = 32):
         self.model.eval()
